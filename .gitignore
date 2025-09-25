@@ -1,0 +1,25 @@
+# Node / Vite
+node_modules/
+dist/
+
+# Env (SupabaseのURL/Keyなどは絶対コミットしない)
+.env
+.env.*
+!.env.example   # 例として残す場合のみ
+
+# Logs
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Tests / Coverage（将来入れる場合に備えて）
+coverage/
+test-results/
+cypress/videos/
+cypress/screenshots/
+
+# Misc（使う予定があれば）
+*.local
