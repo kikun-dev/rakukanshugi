@@ -592,3 +592,232 @@ button:focus-visible {
   text-align: center;
   font-size: 0.95rem;
 }
+.transactions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.transactions__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.transactions__header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.transactions__header p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.transactions__summary {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.transactions__summary-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 15px 36px rgba(15, 23, 42, 0.12);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.transactions__summary-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.transactions__summary-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.transactions__filters,
+.transactions__list {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .transactions__filters,
+  .transactions__list {
+    padding: 1.25rem;
+  }
+}
+
+.transactions__filters-row {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .transactions__filters-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+  }
+}
+
+.transactions__filters-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.transactions__filters-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.transactions__filters-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.transactions__filters-apply {
+  padding: 0.55rem 1.25rem;
+}
+
+.transactions__filters-reset {
+  padding: 0.55rem 1rem;
+  background-color: rgba(148, 163, 184, 0.12);
+  color: #1f2937;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.transactions__filters-reset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.transactions__error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.transactions__loading {
+  margin: 0;
+  padding: 0.5rem 0;
+  color: #475569;
+}
+
+.transactions__empty {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  background-color: rgba(241, 245, 249, 0.7);
+  color: #475569;
+  text-align: center;
+}
+
+.transactions__table-container {
+  overflow-x: auto;
+}
+
+.transactions__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.transactions__table th,
+.transactions__table td {
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.transactions__table th {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.transactions__cell--amount {
+  text-align: right;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.transactions__cell--memo {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transactions__memo-placeholder {
+  color: #94a3b8;
+}
+
+.transactions__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.transactions__badge--pending {
+  background-color: rgba(250, 204, 21, 0.2);
+  color: #92400e;
+}
+
+.transactions__badge--synced {
+  background-color: rgba(34, 197, 94, 0.18);
+  color: #166534;
+}
+
+.transactions__categories {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.transactions__note {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+@media (max-width: 880px) {
+  .transactions__table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 640px) {
+  .transactions__table th,
+  .transactions__table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
