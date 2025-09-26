@@ -113,9 +113,98 @@ button:focus-visible {
   gap: 1rem;
 }
 
+
+.app-shell__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.75);
+}
+
 .app-shell__user {
   font-size: 0.9rem;
   color: rgba(226, 232, 240, 0.9);
+}
+
+.app-shell__status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  background-color: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.app-shell__status-badge--offline {
+  background-color: rgba(248, 113, 113, 0.35);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fee2e2;
+}
+
+.app-shell__sync-button {
+  background-color: rgba(248, 250, 252, 0.12);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0.35rem 0.9rem;
+}
+
+.app-shell__sync-button:hover {
+  background-color: rgba(248, 250, 252, 0.25);
+  transform: translateY(-1px);
+}
+
+.app-shell__sync-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.app-bootstrap-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, #f5f7fa 0%, #eef2ff 100%);
+}
+
+.app-bootstrap-error__card {
+  width: min(420px, 100%);
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+}
+
+.app-bootstrap-error__title {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #1e293b;
+}
+
+.app-bootstrap-error__message {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.app-bootstrap-error__retry {
+  align-self: center;
+  padding: 0.5rem 1.5rem;
+}
+
+.app-bootstrap-error__retry:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .app-shell__signout {
@@ -235,3 +324,4 @@ button:focus-visible {
   background-color: #fee2e2;
   color: #991b1b;
 }
+
