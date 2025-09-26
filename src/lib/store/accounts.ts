@@ -43,9 +43,6 @@ export const useAccountStore = create<AccountState>((set) => ({
   async refreshFromRemote(userId) {
     try {
       const remote = await listAccounts();
-      if (!remote || remote.length === 0) {
-        return;
-      }
 
       const mapped = remote
         .map((record) => mapAccount(record, userId))
@@ -53,7 +50,9 @@ export const useAccountStore = create<AccountState>((set) => ({
 
       await db.transaction("rw", db.accounts, async () => {
         await db.accounts.where("userId").equals(userId).delete();
-        await db.accounts.bulkPut(mapped);
+        if (mapped.length > 0) {
+          await db.accounts.bulkPut(mapped);
+        }
       });
 
       set({ items: mapped, error: undefined });
