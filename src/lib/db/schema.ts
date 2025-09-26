@@ -1,4 +1,15 @@
-﻿export type CategoryRecord = {
+﻿export type AccountRecord = {
+  id: string;
+  userId: string;
+  name: string;
+  type: "credit" | "debit" | "cash" | "other";
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CategoryRecord = {
   id: string;
   userId: string;
   name: string;
