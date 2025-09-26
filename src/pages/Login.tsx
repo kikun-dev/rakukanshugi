@@ -1,17 +1,25 @@
-﻿import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+﻿import { useEffect, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 
 export default function Login() {
   const { session, isLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<{ type: "idle" | "sending" | "sent" | "error"; message?: string }>({
     type: "idle",
   });
 
   const from = (location.state as { from?: Location } | undefined)?.from?.pathname ?? "/";
+  const authError = (location.state as { authError?: string } | undefined)?.authError;
+
+  useEffect(() => {
+    if (!authError) return;
+    setStatus({ type: "error", message: authError });
+    navigate(location.pathname, { replace: true });
+  }, [authError, navigate, location.pathname]);
 
   if (!isLoading && session) {
     return <Navigate to={from} replace />;
@@ -24,7 +32,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) throw error;

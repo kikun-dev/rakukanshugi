@@ -13,9 +13,11 @@ const Transactions = React.lazy(() => import("./pages/Transactions"));
 const Reports = React.lazy(() => import("./pages/Reports"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const Login = React.lazy(() => import("./pages/Login"));
+const AuthCallback = React.lazy(() => import("./pages/AuthCallback"));
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
+  { path: "/auth/callback", element: <AuthCallback /> },
   {
     path: "/",
     element: (
