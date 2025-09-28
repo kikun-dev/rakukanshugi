@@ -1,152 +1,97 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+﻿import { useEffect, useState, type FormEvent } from "react";
 import { format } from "date-fns";
 import { useAuth } from "../lib/auth";
-import {
-  useAccountStore,
-  useCategoryStore,
-  useTransactionStore,
-} from "../lib/store";
+import { createTransaction, listAccounts, type Account } from "../lib/api";
 
-type FormStatus =
-  | { type: "idle" }
-  | { type: "saving" }
-  | { type: "success"; message: string }
-  | { type: "error"; message: string };
+type SubmitState = "idle" | "submitting";
 
-function formatDateInput(date: Date) {
-  return format(date, "yyyy-MM-dd");
+type StatusMessage = { type: "success" | "error"; message: string } | null;
+
+function formatToday() {
+  return format(new Date(), "yyyy-MM-dd");
 }
 
 export default function Home() {
   const { user } = useAuth();
-  const amountInputRef = useRef<HTMLInputElement>(null);
-  const accounts = useAccountStore((state) => state.items.filter((account) => account.isActive));
-  const accountsLoading = useAccountStore((state) => state.isLoading);
-  const categoriesAll = useCategoryStore((state) => state.items);
-  const categories = categoriesAll.filter((category) => category.isActive);
-  const categoriesLoading = useCategoryStore((state) => state.isLoading);
-  const transactions = useTransactionStore((state) => state.items);
-  const addTransaction = useTransactionStore((state) => state.addTransaction);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [amount, setAmount] = useState("");
-  const [occurredAt, setOccurredAt] = useState(() => formatDateInput(new Date()));
-  const [accountId, setAccountId] = useState<string>("");
+  const [occurredAt, setOccurredAt] = useState(formatToday);
+  const [accountId, setAccountId] = useState("");
   const [memo, setMemo] = useState("");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [status, setStatus] = useState<FormStatus>({ type: "idle" });
-
-  const categoryNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const category of categoriesAll) {
-      map.set(category.id, category.name);
-    }
-    return map;
-  }, [categoriesAll]);
-
-  const currencyFormatter = useMemo(
-    () => new Intl.NumberFormat("ja-JP", { style: "currency", currency: "JPY", maximumFractionDigits: 0 }),
-    []
-  );
-
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat("ja-JP", { month: "short", day: "numeric" }),
-    []
-  );
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const [status, setStatus] = useState<StatusMessage>(null);
 
   useEffect(() => {
-    if (!accountId && accounts.length > 0) {
-      setAccountId(accounts[0].id);
-    }
-  }, [accountId, accounts]);
+    if (!user) return;
+    setIsLoading(true);
+    setLoadError(null);
 
-  useEffect(() => {
-    if (status.type !== "success") return;
-    const timer = window.setTimeout(() => {
-      setStatus({ type: "idle" });
-    }, 3000);
-    return () => window.clearTimeout(timer);
-  }, [status]);
-
-  const hasAccounts = accounts.length > 0;
-  const isSaving = status.type === "saving";
-  const amountValue = Number.parseInt(amount, 10);
-  const isAmountValid = Number.isFinite(amountValue) && amountValue > 0;
-  const canSubmit =
-    !!user && hasAccounts && !!accountId && isAmountValid && !isSaving && !accountsLoading;
-
-  const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
-
-  function resetStatus() {
-    setStatus((prev) => {
-      if (prev.type === "success" || prev.type === "error") {
-        return { type: "idle" };
-      }
-      return prev;
-    });
-  }
-
-  function handleCategoryToggle(categoryId: string) {
-    setSelectedCategoryIds((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
-    );
-    resetStatus();
-  }
+    listAccounts()
+      .then((items) => {
+        setAccounts(items);
+        if (items.length > 0) {
+          setAccountId((prev) => (prev ? prev : items[0].id));
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load accounts", error);
+        setLoadError(error instanceof Error ? error.message : "支払アカウントの取得に失敗しました");
+      })
+      .finally(() => setIsLoading(false));
+  }, [user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user || !hasAccounts) return;
+    if (!user || submitState === "submitting") return;
 
-    if (!isAmountValid) {
+    if (!amount || Number.parseInt(amount, 10) <= 0) {
       setStatus({ type: "error", message: "金額は1円以上の整数で入力してください" });
       return;
     }
-
     if (!accountId) {
       setStatus({ type: "error", message: "支払アカウントを選択してください" });
       return;
     }
 
-    setStatus({ type: "saving" });
+    setSubmitState("submitting");
+    setStatus(null);
+
     try {
-      await addTransaction({
-        userId: user.id,
+      await createTransaction({
         accountId,
-        amount: amountValue,
+        amount: Number.parseInt(amount, 10),
         occurredAt,
         memo: memo.trim() || undefined,
-        categoryIds: selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       });
 
-      setStatus({ type: "success", message: "保存しました (オフライン時は後で同期します)" });
       setAmount("");
       setMemo("");
-      setSelectedCategoryIds([]);
-      requestAnimationFrame(() => {
-        amountInputRef.current?.focus();
-      });
+      setStatus({ type: "success", message: "保存しました" });
+      window.alert("保存しました");
     } catch (error) {
-      console.error("Failed to add transaction", error);
-      setStatus({
-        type: "error",
-        message: error instanceof Error ? error.message : "保存に失敗しました",
-      });
+      console.error("Failed to save transaction", error);
+      const message = error instanceof Error ? error.message : "保存に失敗しました";
+      setStatus({ type: "error", message });
+      window.alert(`保存に失敗しました: ${message}`);
+    } finally {
+      setSubmitState("idle");
     }
   }
 
   return (
-    <div className="home">
-      <section className="home__layout">
-        <form className="home__form" onSubmit={handleSubmit}>
-          <header className="home__header">
-            <h1 className="home__title">即入力</h1>
-            <p className="home__subtitle">金額とカテゴリを素早く記録します。N キーでこのフォームにフォーカスできます。</p>
-          </header>
+    <div className="home-page">
+      <section className="home-card" aria-labelledby="quick-entry-heading">
+        <div>
+          <h1 id="quick-entry-heading">支出を記録する</h1>
+          <p>金額・日付・メモを入力し保存します。送信結果はポップアップでお知らせします。</p>
+        </div>
 
-          <div className="home__field">
-            <label className="home__label" htmlFor="amount">
-              金額 (円)
-            </label>
+        <form className="home-form" onSubmit={handleSubmit}>
+          <div className="home-field">
+            <label htmlFor="amount">金額 (円)</label>
             <input
               id="amount"
               name="amount"
@@ -154,170 +99,71 @@ export default function Home() {
               inputMode="numeric"
               min={1}
               required
-              ref={amountInputRef}
-              className="home__input"
               value={amount}
-              onChange={(event) => {
-                setAmount(event.currentTarget.value.replace(/[^0-9]/g, ""));
-                resetStatus();
-              }}
+              onChange={(event) => setAmount(event.currentTarget.value.replace(/[^0-9]/g, ""))}
             />
           </div>
 
-          <div className="home__two-column">
-            <div className="home__field">
-              <label className="home__label" htmlFor="occurred-at">
-                日付
-              </label>
-              <input
-                id="occurred-at"
-                name="occurredAt"
-                type="date"
-                required
-                className="home__input"
-                value={occurredAt}
-                onChange={(event) => {
-                  setOccurredAt(event.currentTarget.value);
-                  resetStatus();
-                }}
-              />
-            </div>
-            <div className="home__field">
-              <label className="home__label" htmlFor="account">
-                支払アカウント
-              </label>
-              <select
-                id="account"
-                name="accountId"
-                required
-                className="home__input"
-                value={accountId}
-                onChange={(event) => {
-                  setAccountId(event.currentTarget.value);
-                  resetStatus();
-                }}
-                disabled={!hasAccounts}
-              >
-                {!hasAccounts ? <option value="">アカウントがありません</option> : null}
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name}
-                  </option>
-                ))}
-              </select>
-              {!hasAccounts && !accountsLoading ? (
-                <p className="home__hint" role="note">
-                  アカウントが未設定です。先に設定画面で登録してください。
-                </p>
-              ) : null}
-            </div>
+          <div className="home-field">
+            <label htmlFor="occurred-at">日付</label>
+            <input
+              id="occurred-at"
+              name="occurredAt"
+              type="date"
+              required
+              value={occurredAt}
+              onChange={(event) => setOccurredAt(event.currentTarget.value)}
+            />
           </div>
 
-          <div className="home__field">
-            <label className="home__label" htmlFor="memo">
-              メモ (任意)
-            </label>
-            <input
+          <div className="home-field">
+            <label htmlFor="account">支払アカウント</label>
+            <select
+              id="account"
+              name="accountId"
+              required
+              value={accountId}
+              onChange={(event) => setAccountId(event.currentTarget.value)}
+              disabled={isLoading || accounts.length === 0}
+            >
+              {accounts.length === 0 ? <option value="">アカウントがありません</option> : null}
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
+            </select>
+            {loadError ? <p className="home-hint">{loadError}</p> : null}
+          </div>
+
+          <div className="home-field">
+            <label htmlFor="memo">メモ (任意)</label>
+            <textarea
               id="memo"
               name="memo"
-              type="text"
-              className="home__input"
+              rows={3}
               value={memo}
-              onChange={(event) => {
-                setMemo(event.currentTarget.value);
-                resetStatus();
-              }}
+              onChange={(event) => setMemo(event.currentTarget.value)}
             />
           </div>
 
-          <fieldset className="home__field home__field--categories">
-            <legend className="home__label">カテゴリ (複数選択可・均等按分)</legend>
-            {categoriesLoading ? (
-              <p className="home__hint">読み込み中…</p>
-            ) : categories.length === 0 ? (
-              <p className="home__hint">カテゴリがまだありません。デフォルトカテゴリを同期してください。</p>
-            ) : (
-              <div className="home__categories">
-                {categories.map((category) => {
-                  const checked = selectedCategoryIds.includes(category.id);
-                  return (
-                    <label key={category.id} className={`home__category${checked ? " home__category--selected" : ""}`}>
-                      <input
-                        type="checkbox"
-                        value={category.id}
-                        checked={checked}
-                        onChange={() => handleCategoryToggle(category.id)}
-                      />
-                      <span>{category.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </fieldset>
-
-          <div className="home__actions">
-            <button type="submit" className="home__submit" disabled={!canSubmit}>
-              {isSaving ? "保存中…" : "保存"}
+          <div className="home-actions">
+            <button type="submit" disabled={submitState === "submitting" || !user}>
+              {submitState === "submitting" ? "送信中..." : "保存"}
             </button>
-            <span className="home__hint">Enter で保存できます</span>
+            <span className="home-hint">保存すると Supabase に記録されます</span>
           </div>
 
-          {status.type === "success" ? (
-            <p className="home__status home__status--success" role="status">
-              {status.message}
-            </p>
-          ) : null}
-          {status.type === "error" ? (
-            <p className="home__status home__status--error" role="alert">
+          {status ? (
+            <p
+              className={`home-status home-status--${status.type}`}
+              role={status.type === "error" ? "alert" : "status"}
+            >
               {status.message}
             </p>
           ) : null}
         </form>
-
-        <section className="home__recent" aria-label="最近の入力">
-          <header className="home__recent-header">
-            <h2>最近の取引</h2>
-            <p className="home__recent-hint">最新5件を表示します。詳細は履歴タブへ。</p>
-          </header>
-
-          {recentTransactions.length === 0 ? (
-            <p className="home__empty">まだ取引がありません。入力するとここに表示されます。</p>
-          ) : (
-            <ul className="home__recent-list">
-              {recentTransactions.map((transaction) => (
-                <li key={transaction.id} className="home__transaction">
-                  <div className="home__transaction-meta">
-                    <span className="home__transaction-date">
-                      {dateFormatter.format(new Date(transaction.occurredAt))}
-                    </span>
-                    <span className="home__transaction-amount">
-                      {currencyFormatter.format(transaction.amount)}
-                    </span>
-                    {transaction.pendingSync ? (
-                      <span className="home__pending" role="status">
-                        未同期
-                      </span>
-                    ) : null}
-                  </div>
-                  {transaction.memo ? <p className="home__transaction-memo">{transaction.memo}</p> : null}
-                  {transaction.splits.length > 0 ? (
-                    <ul className="home__transaction-categories">
-                      {transaction.splits.map((split) => (
-                        <li key={split.id}>{categoryNameById.get(split.categoryId) ?? "カテゴリ不明"}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </section>
     </div>
   );
 }
-
-
-
-
