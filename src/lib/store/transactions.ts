@@ -1,4 +1,4 @@
-import { create } from "zustand";
+ï»¿import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import {
   db,
@@ -17,6 +17,7 @@ type AddTransactionInput = {
   userId: string;
   accountId: string;
   amount: number;
+  title: string;
   occurredAt: string;
   memo?: string;
   categoryIds?: string[];
@@ -53,6 +54,7 @@ function mapRemoteTransaction(record: RemoteTransaction, userId: string): Stored
     userId: record.user_id ?? userId,
     accountId: record.account_id,
     amount: record.amount,
+    title: record.title ?? "",
     memo: record.memo ?? null,
     occurredAt: record.occurred_at,
     createdAt: record.created_at ?? record.updated_at,
@@ -108,12 +110,12 @@ export const useTransactionStore = create<TransactionsState>((set) => ({
       console.error("Failed to load transactions from IndexedDB", error);
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : "æˆø‚Ì“Ç‚İ‚İ‚É¸”s‚µ‚Ü‚µ‚½",
+        error: error instanceof Error ? error.message : "å–å¼•ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸ",
       });
     }
   },
   async addTransaction(input) {
-    const { userId, accountId, amount, occurredAt, memo } = input;
+    const { userId, accountId, amount, title, occurredAt, memo } = input;
     const transactionId = uuidv4();
     const now = new Date().toISOString();
 
@@ -136,6 +138,7 @@ export const useTransactionStore = create<TransactionsState>((set) => ({
       userId,
       accountId,
       amount,
+      title,
       memo: memo ?? null,
       occurredAt,
       createdAt: now,
@@ -177,6 +180,7 @@ export const useTransactionStore = create<TransactionsState>((set) => ({
           id: payload.transaction.id,
           accountId: payload.transaction.accountId,
           amount: payload.transaction.amount,
+          title: payload.transaction.title,
           occurredAt: payload.transaction.occurredAt,
           memo: payload.transaction.memo ?? undefined,
           splits: payload.splits.map((split) => ({
@@ -227,9 +231,12 @@ export const useTransactionStore = create<TransactionsState>((set) => ({
       set({ items: transactions, error: undefined });
     } catch (error) {
       console.error("Failed to fetch transactions from Supabase", error);
-      set({ error: error instanceof Error ? error.message : "æˆø‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½" });
+      set({ error: error instanceof Error ? error.message : "å–å¼•ã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸ" });
     }
   },
 }));
+
+
+
 
 

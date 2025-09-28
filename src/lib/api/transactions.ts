@@ -1,4 +1,4 @@
-// src/lib/api/transactions.ts
+﻿// src/lib/api/transactions.ts
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../supabase";
 
@@ -7,6 +7,7 @@ export type Transaction = {
   user_id?: string | null;
   account_id: string;
   amount: number;
+  title: string;
   memo?: string | null;
   occurred_at: string; // YYYY-MM-DD
   created_at?: string;
@@ -31,6 +32,7 @@ export type CreateTransactionInput = {
   id?: string;
   accountId: string;
   amount: number;
+  title: string;
   occurredAt: string; // YYYY-MM-DD
   memo?: string;
   categoryIds?: string[];
@@ -38,13 +40,14 @@ export type CreateTransactionInput = {
 };
 
 export async function createTransaction(input: CreateTransactionInput) {
-  const { accountId, amount, occurredAt, memo } = input;
+  const { accountId, amount, title, occurredAt, memo } = input;
   const transactionId = input.id ?? uuidv4();
 
   const insertPayload: Record<string, unknown> = {
     id: transactionId,
     account_id: accountId,
     amount,
+    title,
     occurred_at: occurredAt,
     memo,
   };
@@ -52,7 +55,7 @@ export async function createTransaction(input: CreateTransactionInput) {
   const { data: tx, error: txErr } = await supabase
     .from("transactions")
     .insert([insertPayload])
-    .select("id, user_id, account_id, amount, memo, occurred_at, created_at, updated_at, is_deleted")
+    .select("id, user_id, account_id, amount, title, memo, occurred_at, created_at, updated_at, is_deleted")
     .single();
 
   if (txErr) throw txErr;
@@ -92,7 +95,7 @@ export async function listTransactions(limit = 200) {
     .from("transactions")
     .select(
       `
-      id, user_id, account_id, amount, memo, occurred_at, created_at, updated_at, is_deleted,
+      id, user_id, account_id, amount, title, memo, occurred_at, created_at, updated_at, is_deleted,
       transaction_splits ( id, transaction_id, category_id, ratio, created_at, updated_at )
     `
     )
@@ -111,5 +114,7 @@ export async function listSplitsWithAmount(txId: string) {
   if (error) throw error;
   return data as Array<{ transaction_id: string; category_id: string; ratio: number; amount_calc: number }>;
 }
+
+
 
 

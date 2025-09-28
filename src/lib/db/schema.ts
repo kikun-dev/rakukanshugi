@@ -26,6 +26,7 @@ export type TransactionRecord = {
   userId: string;
   accountId: string;
   amount: number;
+  title: string;
   memo: string | null;
   occurredAt: string;
   createdAt: string;
@@ -57,3 +58,4 @@ export type SyncOperationRecord = {
 export type TransactionWithSplits = TransactionRecord & {
   splits: TransactionSplitRecord[];
 };
+
